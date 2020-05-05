@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>OCR demo</title>
+    <!-- <script src="tesseract.js"></script> -->
+    <script src="https://unpkg.com/tesseract.js@v2.1.0/dist/tesseract.min.js"></script>
+    <script src="jquery-3.0.0.min.js"></script>
+    <script
+      class="jsbin"
+      src="http://ajax.googleapis.com/ajax/libs/jquery/1/jquery.min.js"
+    ></script>
+    <script
+      class="jsbin"
+      src="http://ajax.googleapis.com/ajax/libs/jqueryui/1.8.0/jquery-ui.min.js"
+    ></script>
+  </head>
+  <body>
+    <!-- <input type="text" id="url" placeholder="Image URL" /> -->
+    <input
+      type="file"
+      id="fileImg"
+      onchange="readURL(this)"
+      placeholder="Insert Image"
+    /><br />
+    <input type="button" id="go_button" value="Run" />
+    <img src="" id="image" hidden />
+    <div id="ocr_results"></div>
+    <div id="ocr_status"></div>
+  </body>
+
+  <script type="text/javascript">
+    const worker = Tesseract.createWorker({
+      logger: (m) => {
+        console.log(m);
+        document.getElementById("ocr_status").innerHTML = `Status: ${m.status}
+    		Progress: ${m.progress}`;
+      },
+    });
+    Tesseract.setLogging(true);
+    async function getTextFromImage(url) {
+      await worker.load();
+      await worker.loadLanguage("ind");
+      await worker.initialize("ind");
+
+      const {
+        data: { text },
+      } = await worker.recognize(url);
+
+      await worker.terminate();
+
+      return text;
+    }
+
+    function readURL(input) {
+      if (input.files && input.files[0]) {
+        var reader = new FileReader();
+        reader.crossOrigin = "Anonymous";
+        reader.onload = function (e) {
+          $("#image").attr("src", e.target.result);
+        };
+        reader.readAsDataURL(input.files[0]);
+      }
+    }
+    document
+      .getElementById("go_button")
+      .addEventListener("click", function (e) {
+        var imageUrl = new Image();
+        imageUrl.src = document.getElementById("image").src;
+
+        getTextFromImage(imageUrl).then((res) => {
+          document.getElementById("ocr_results").innerHTML = `Result: ${res}`;
+          document.getElementById("ocr_status").innerHTML = "";
+        });
+      });
+  </script>
+</html>
